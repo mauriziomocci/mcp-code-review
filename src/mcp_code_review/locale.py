@@ -1,0 +1,73 @@
+# src/mcp_code_review/locale.py
+"""Localized strings for review reports."""
+
+REPORT_SECTIONS: dict[str, dict[str, str]] = {
+    "en": {
+        "title": "Code Review",
+        "date": "Date",
+        "author": "PR Author",
+        "branch": "Branch",
+        "files_changed": "Files changed",
+        "summary": "Summary",
+        "code_quality": "Code Quality",
+        "strengths": "Strengths",
+        "issues_found": "Issues Found",
+        "static_analysis": "Static Analysis",
+        "security": "Security",
+        "performance": "Performance",
+        "severity_summary": "Severity Summary",
+        "verdict": "Verdict",
+        "approved": "Approved",
+        "approved_with_reservations": "Approved with reservations",
+        "changes_requested": "Changes requested",
+        "rejected": "Rejected",
+        "rationale": "Rationale",
+    },
+    "it": {
+        "title": "Code Review",
+        "date": "Data",
+        "author": "Autore PR",
+        "branch": "Branch",
+        "files_changed": "File modificati",
+        "summary": "Riepilogo",
+        "code_quality": "Qualità del codice",
+        "strengths": "Punti di forza",
+        "issues_found": "Problemi trovati",
+        "static_analysis": "Analisi statica",
+        "security": "Sicurezza",
+        "performance": "Performance",
+        "severity_summary": "Riepilogo severità",
+        "verdict": "Verdetto",
+        "approved": "Approvata",
+        "approved_with_reservations": "Approvata con riserve",
+        "changes_requested": "Richieste modifiche",
+        "rejected": "Rifiutata",
+        "rationale": "Motivazione",
+    },
+    "es": {
+        "title": "Revisión de Código",
+        "date": "Fecha",
+        "author": "Autor PR",
+        "branch": "Rama",
+        "files_changed": "Archivos modificados",
+        "summary": "Resumen",
+        "code_quality": "Calidad del código",
+        "strengths": "Puntos fuertes",
+        "issues_found": "Problemas encontrados",
+        "static_analysis": "Análisis estático",
+        "security": "Seguridad",
+        "performance": "Rendimiento",
+        "severity_summary": "Resumen de severidad",
+        "verdict": "Veredicto",
+        "approved": "Aprobada",
+        "approved_with_reservations": "Aprobada con reservas",
+        "changes_requested": "Cambios solicitados",
+        "rejected": "Rechazada",
+        "rationale": "Justificación",
+    },
+}
+
+
+def get_sections(locale: str) -> dict[str, str]:
+    """Return section headers for the given locale, falling back to English."""
+    return REPORT_SECTIONS.get(locale, REPORT_SECTIONS["en"])

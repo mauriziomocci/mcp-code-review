@@ -1,0 +1,11 @@
+# tests/fixtures/sample_codereview.yml
+language: python
+locale: it
+ignore:
+  - "*/migrations/*"
+  - "tests/fixtures/"
+severity_overrides:
+  E501: info
+custom_rules:
+  require_type_hints: false
+  max_file_lines: 500
