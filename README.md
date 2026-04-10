@@ -1,5 +1,9 @@
 # mcp-code-review
 
+[![PyPI version](https://img.shields.io/pypi/v/mcp-code-review.svg)](https://pypi.org/project/mcp-code-review/)
+[![Python versions](https://img.shields.io/pypi/pyversions/mcp-code-review.svg)](https://pypi.org/project/mcp-code-review/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 An MCP server that brings structured code review into any MCP-compatible client. Review GitHub Pull Requests, GitLab Merge Requests, and local git diffs — with static analysis, project conventions, and multi-language report output.
 
 ---
