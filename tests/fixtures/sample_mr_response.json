@@ -1,0 +1,14 @@
+{
+    "mr": {
+        "title": "Fix database migration",
+        "author": {"username": "janedoe"},
+        "source_branch": "fix/migration",
+        "target_branch": "main",
+        "web_url": "https://gitlab.com/org/repo/-/merge_requests/15"
+    },
+    "changes": {
+        "changes": [
+            {"new_path": "migrations/0042.py", "old_path": "migrations/0042.py", "new_file": true, "renamed_file": false, "deleted_file": false, "diff": "@@ -0,0 +1,20 @@\n+class Migration:\n+    pass"}
+        ]
+    }
+}
