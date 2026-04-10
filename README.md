@@ -152,6 +152,38 @@ Supported locales:
 
 ---
 
+## Claude Code Skill (Optional)
+
+The repository includes a companion skill for Claude Code that provides a structured review process on top of the MCP tools — checklist, severity classification, report format, and multi-language support.
+
+### Install the skill
+
+```bash
+# Symlink into Claude Code skills directory
+ln -s /path/to/mcp-code-review/skills/code-review-mcp ~/.claude/skills/code-review-mcp
+```
+
+Or copy the file manually:
+
+```bash
+mkdir -p ~/.claude/skills/code-review-mcp
+cp /path/to/mcp-code-review/skills/code-review-mcp/SKILL.md ~/.claude/skills/code-review-mcp/
+```
+
+The skill activates automatically when you ask for a code review in Claude Code. It orchestrates the MCP tools in the right order and produces a structured markdown report.
+
+### What the skill adds
+
+| Without skill | With skill |
+|--------------|-----------|
+| You call tools manually | Tools called automatically in the right order |
+| No structured process | Checklist: correctness, security, performance, quality, tests, docs |
+| Raw data returned | Full markdown report with severity classification |
+| No verdict | Verdict: approved / changes requested / rejected |
+| You decide the format | Consistent format across all reviews |
+
+---
+
 ## Development
 
 Clone the repository and install dependencies with [uv](https://github.com/astral-sh/uv):
