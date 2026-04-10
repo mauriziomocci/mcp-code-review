@@ -1,0 +1,14 @@
+{
+    "pr": {
+        "title": "Add user authentication",
+        "user": {"login": "johndoe"},
+        "head": {"ref": "feature/auth"},
+        "base": {"ref": "main"},
+        "html_url": "https://github.com/org/repo/pull/42",
+        "body": "This PR adds JWT authentication."
+    },
+    "files": [
+        {"filename": "src/auth.py", "status": "added", "additions": 50, "deletions": 0, "patch": "@@ -0,0 +1,50 @@\n+import jwt"},
+        {"filename": "src/main.py", "status": "modified", "additions": 5, "deletions": 2, "patch": "@@ -1,5 +1,8 @@\n import os\n+from auth import authenticate"}
+    ]
+}
