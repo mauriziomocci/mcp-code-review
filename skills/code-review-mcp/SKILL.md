@@ -66,48 +66,119 @@ Call the appropriate tool from Phase 1. The tool returns structured `ReviewData`
 
 ## Phase 4: Analyze
 
-This is where you reason on the data. Go through each file change systematically.
+This is the core of the review. Reason deeply on the code, not just surface-level checks. Apply software engineering principles rigorously. Go through each file change systematically.
 
-### Checklist
+### 4.1 Architecture and Design
 
-For **every file** in the diff, check:
+**SOLID Principles:**
+- [ ] **Single Responsibility (SRP):** Does each class/module have one reason to change? Flag classes that mix concerns (e.g., business logic + persistence + formatting in the same class).
+- [ ] **Open/Closed (OCP):** Is the code extensible without modification? Flag switch/if-else chains that grow with each new feature — suggest strategy pattern, registry, or polymorphism.
+- [ ] **Liskov Substitution (LSP):** Do subtypes honor the contract of their parent? Flag overrides that change behavior in unexpected ways or violate preconditions/postconditions.
+- [ ] **Interface Segregation (ISP):** Are interfaces focused? Flag "god interfaces" that force implementors to depend on methods they don't use.
+- [ ] **Dependency Inversion (DIP):** Do high-level modules depend on abstractions, not concrete implementations? Flag direct instantiation of infrastructure dependencies (DB clients, HTTP clients, file I/O) inside business logic — suggest injection.
 
-**Correctness:**
+**Coupling and Cohesion:**
+- [ ] Low coupling between modules? Flag circular imports, tight dependencies between unrelated modules, or modules that know too much about each other's internals.
+- [ ] High cohesion within modules? Flag files that contain unrelated functions grouped by technical layer rather than by domain responsibility.
+- [ ] Are module boundaries well-defined? Flag leaking abstractions — internal implementation details exposed through public interfaces.
+
+**Design Patterns (check for misuse and missed opportunities):**
+- [ ] Pattern applied correctly? Flag pattern over-engineering (e.g., factory for a single type, observer for a single listener).
+- [ ] Missing pattern where it would simplify? Flag complex conditional logic that maps to Strategy, State, or Command. Flag object construction complexity that maps to Builder or Factory.
+- [ ] Anti-patterns present? Flag God Object, Spaghetti Code, Shotgun Surgery (one change requires edits in many unrelated places), Feature Envy (method uses more data from another class than its own).
+
+**Separation of Concerns:**
+- [ ] Business logic separated from infrastructure (DB, HTTP, filesystem)?
+- [ ] Presentation separated from domain logic?
+- [ ] Configuration separated from code?
+- [ ] Cross-cutting concerns (logging, auth, validation) handled consistently, not scattered?
+
+### 4.2 Correctness
+
 - [ ] Does the code do what the PR/MR description says?
-- [ ] Are there logic errors, off-by-one errors, or wrong conditions?
-- [ ] Are edge cases handled? (empty input, null values, boundary conditions)
+- [ ] Logic errors: off-by-one, wrong operator, inverted condition, missing null check?
+- [ ] Edge cases: empty input, zero, negative values, boundary conditions, concurrent access?
+- [ ] State management: race conditions, stale state, inconsistent updates?
+- [ ] Error propagation: are errors handled where they occur or correctly propagated? Do callers handle error returns?
+- [ ] Contract violations: does the function honor its docstring/signature? Does it return what it promises?
 
-**Security:**
-- [ ] No hardcoded secrets, tokens, or passwords
-- [ ] Input validation on external data (user input, API responses)
-- [ ] No SQL injection, XSS, command injection vectors
-- [ ] Proper authentication/authorization checks
-- [ ] Sensitive data not logged or exposed in error messages
+### 4.3 Security
 
-**Performance:**
-- [ ] No N+1 queries or queries in loops
-- [ ] No unnecessary memory allocation (loading entire datasets when a subset suffices)
-- [ ] Pagination used for large result sets
-- [ ] Appropriate indexing for new database fields
+- [ ] No hardcoded secrets, tokens, passwords, or API keys
+- [ ] Input validation at system boundaries (user input, API responses, file uploads, URL parameters)
+- [ ] No injection vectors: SQL injection, XSS, command injection, path traversal, LDAP injection
+- [ ] Authentication and authorization checks on every protected endpoint
+- [ ] Sensitive data not logged, not in error messages, not in stack traces
+- [ ] Cryptography: no custom crypto, no weak algorithms (MD5, SHA1 for security), no hardcoded keys/IVs
+- [ ] CSRF/CORS configured correctly for web endpoints
+- [ ] Rate limiting on public-facing endpoints
+- [ ] Deserialization of untrusted data (pickle, yaml.load without SafeLoader, eval)
 
-**Code Quality:**
-- [ ] Names are clear and accurate (describe what, not how)
-- [ ] Functions have a single responsibility
-- [ ] No code duplication (DRY)
-- [ ] No dead code or unused imports
-- [ ] Error handling is specific (no bare `except Exception`)
-- [ ] Consistent with the codebase style and conventions
+### 4.4 Performance
 
-**Testing:**
-- [ ] New code has tests
-- [ ] Tests verify behavior, not implementation
-- [ ] Edge cases are tested
-- [ ] Existing tests still pass (no silent breakage)
+- [ ] N+1 queries: database calls inside loops, missing select_related/prefetch_related (Django), eager loading
+- [ ] Unnecessary memory allocation: loading entire datasets when streaming/pagination suffices
+- [ ] Missing pagination for large result sets
+- [ ] Missing database indexes for new query patterns (especially on foreign keys and filter fields)
+- [ ] Expensive operations in hot paths: regex compilation in loops, repeated I/O, synchronous blocking in async context
+- [ ] Missing caching where appropriate (repeated identical computations or queries)
+- [ ] Connection management: creating new DB/HTTP connections per request instead of pooling
+- [ ] Algorithmic complexity: O(n^2) or worse where O(n log n) or O(n) is achievable
 
-**Documentation:**
-- [ ] Public API changes are documented
-- [ ] Non-obvious logic has comments explaining "why"
-- [ ] Breaking changes are noted
+### 4.5 Error Handling and Resilience
+
+- [ ] Specific exceptions caught (no bare `except:` or `except Exception:` when a specific type is known)
+- [ ] Error messages are actionable — include context (what failed, with what input, what was expected)
+- [ ] Resource cleanup in error paths (files, connections, locks) — use context managers or try/finally
+- [ ] Fail-fast: invalid state detected early, not deep in the call stack
+- [ ] Idempotency: can the operation be safely retried?
+- [ ] Graceful degradation: does the system handle partial failures (network timeouts, service unavailability)?
+- [ ] No swallowed exceptions (catch-and-ignore without logging)
+
+### 4.6 Code Quality
+
+- [ ] Naming: clear, accurate, intention-revealing (describe what, not how). No abbreviations that require explanation.
+- [ ] Function length: functions do one thing and are readable without scrolling. Flag functions > 30 lines — suggest extraction.
+- [ ] Nesting depth: max 3 levels of indentation. Flag deep nesting — suggest early returns, guard clauses, or extraction.
+- [ ] DRY: no duplicated logic. Flag copy-paste code — suggest extraction to shared function.
+- [ ] Dead code: no unused imports, unreachable branches, commented-out code.
+- [ ] Magic numbers/strings: flag unnamed constants. Suggest named constants or enums.
+- [ ] Consistent with codebase conventions (naming, structure, patterns, formatting).
+- [ ] Appropriate level of abstraction: not too abstract (premature generalization) and not too concrete (hardcoded specifics).
+
+### 4.7 Testing
+
+- [ ] New code has tests that verify behavior, not implementation details
+- [ ] Tests cover the happy path AND edge cases (empty, null, error, boundary)
+- [ ] Tests are independent — no shared mutable state, no order dependency
+- [ ] Mocking is minimal — mock at boundaries (external services, I/O), not internal logic
+- [ ] Test names describe the scenario and expected outcome
+- [ ] No test logic (conditionals, loops in tests) — tests should be linear assertions
+- [ ] Regression test for every bug fix (the bug should be reproducible by the test)
+- [ ] Existing tests still pass — no silent breakage
+
+### 4.8 API Design (for public interfaces, endpoints, library APIs)
+
+- [ ] Consistent naming and conventions across the API surface
+- [ ] Backward compatibility: does the change break existing consumers?
+- [ ] Proper HTTP methods and status codes (REST)
+- [ ] Input validation with clear error messages
+- [ ] Versioning strategy if breaking changes are introduced
+- [ ] Response format is consistent and documented
+
+### 4.9 Documentation
+
+- [ ] Public API changes are documented (docstrings, README, changelog)
+- [ ] Non-obvious logic has comments explaining "why", not "what"
+- [ ] Breaking changes noted in PR description and changelog
+- [ ] Architecture decisions documented (ADR or inline) when introducing new patterns
+
+### Static Analysis Findings
+
+If the review data includes `static_analysis` findings, integrate them:
+- Group by severity (error > warning > info)
+- For each finding, check if it's a real issue or a false positive
+- Include confirmed findings in the report with the linter's rule code
 
 ### Static Analysis Findings
 
@@ -149,11 +220,19 @@ Structure the review as a markdown report. Use the locale from conventions for s
 
 ---
 
+## Architecture and Design
+
+[Evaluate SOLID compliance, coupling/cohesion, separation of concerns, design patterns.
+Only include this section if architectural issues are found or if the change introduces
+new components/modules. For small changes, skip or write "No architectural concerns."]
+
+---
+
 ## {Code Quality}
 
 ### {Strengths}
 
-[List what's done well — good patterns, clean code, thorough tests]
+[List what's done well — good patterns, clean code, thorough tests, good abstractions]
 
 ### {Issues Found}
 
@@ -190,13 +269,22 @@ Structure the review as a markdown report. Use the locale from conventions for s
 
 ## {Security}
 
-[Security-specific observations or "No security issues found."]
+[Security-specific observations or "No security issues found."
+Check: OWASP top 10, injection vectors, auth/authz, secrets exposure, crypto misuse]
 
 ---
 
 ## {Performance}
 
-[Performance-specific observations or "No performance issues found."]
+[Performance-specific observations or "No performance issues found."
+Check: N+1 queries, algorithmic complexity, connection pooling, caching, memory]
+
+---
+
+## Error Handling and Resilience
+
+[Error handling assessment or "Error handling is adequate."
+Check: specific exceptions, resource cleanup, fail-fast, graceful degradation, idempotency]
 
 ---
 

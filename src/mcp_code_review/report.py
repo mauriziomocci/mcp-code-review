@@ -34,8 +34,8 @@ def build_report_template(review_data: ReviewData) -> str:
     )
 
     sections = [
-        "summary", "code_quality", "static_analysis",
-        "security", "performance", "severity_summary", "verdict",
+        "summary", "architecture", "code_quality", "static_analysis",
+        "security", "performance", "error_handling", "severity_summary", "verdict",
     ]
 
     for section in sections:
