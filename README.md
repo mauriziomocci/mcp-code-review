@@ -20,6 +20,7 @@ An MCP server that brings structured code review into any MCP-compatible client.
 - Multi-language report output: English, Italian, Spanish
 - Configurable review focus: all, security, performance, quality
 - Saves review reports as Markdown files
+- **Professional engineering checklist** with 13 analysis categories (SOLID, architecture, security, performance, data layer, observability, concurrency, and more)
 
 ---
 
@@ -177,10 +178,32 @@ The skill activates automatically when you ask for a code review in Claude Code.
 | Without skill | With skill |
 |--------------|-----------|
 | You call tools manually | Tools called automatically in the right order |
-| No structured process | Checklist: correctness, security, performance, quality, tests, docs |
+| No structured process | 13-category engineering checklist (see below) |
+| Same depth for every change | Review depth scales to change size (trivial to large) |
+| No change-type awareness | Different priorities for feature/bugfix/refactor/migration |
 | Raw data returned | Full markdown report with severity classification |
 | No verdict | Verdict: approved / changes requested / rejected |
 | You decide the format | Consistent format across all reviews |
+
+### Analysis Categories
+
+The skill applies professional software engineering standards across 13 categories:
+
+| # | Category | Key checks |
+|---|----------|-----------|
+| 1 | **PR/MR Description** | Purpose, scope, testing instructions, breaking changes |
+| 2 | **Architecture & Design** | SOLID principles, coupling/cohesion, design patterns, separation of concerns |
+| 3 | **Correctness** | Logic errors, edge cases, race conditions, contract violations |
+| 4 | **Security** | OWASP top 10, injection, auth, crypto, secrets, CSRF, rate limiting |
+| 5 | **Performance** | N+1 queries, algorithmic complexity, caching, connection pooling |
+| 6 | **Error Handling** | Specific exceptions, resource cleanup, fail-fast, graceful degradation |
+| 7 | **Code Quality** | Naming, DRY, nesting depth, magic numbers, abstraction level |
+| 8 | **Testing** | Behavior tests, edge cases, minimal mocking, regression tests |
+| 9 | **API Design** | Backward compatibility, REST conventions, versioning |
+| 10 | **Data Layer** | Migration safety, rollback plan, schema design, Django-specific |
+| 11 | **Dependencies** | License, maintenance, security, version pinning, necessity |
+| 12 | **Observability** | Logging, metrics, health checks, tracing, PII protection |
+| 13 | **Concurrency/Async** | Deadlocks, idempotency, retry safety, Celery, async/await |
 
 ---
 
