@@ -66,7 +66,44 @@ Call the appropriate tool from Phase 1. The tool returns structured `ReviewData`
 
 ## Phase 4: Analyze
 
-This is the core of the review. Reason deeply on the code, not just surface-level checks. Apply software engineering principles rigorously. Go through each file change systematically.
+This is the core of the review. Reason deeply on the code, not just surface-level checks. Apply software engineering principles rigorously.
+
+### Review Depth
+
+Scale the review depth to the size and nature of the change. Not every PR needs a full SOLID analysis.
+
+| Change size | Files | Depth |
+|-------------|-------|-------|
+| **Trivial** | 1-2 files, < 20 lines | Correctness, Security. Skip Architecture/SOLID. |
+| **Small** | 2-5 files, < 100 lines | Correctness, Security, Code Quality, Testing. Light Architecture check. |
+| **Medium** | 5-15 files, < 500 lines | Full checklist. Architecture analysis for new components. |
+| **Large** | 15+ files or 500+ lines | Full checklist. Deep Architecture review. Flag if PR should be split. |
+
+### Change Type Awareness
+
+Different change types demand different emphasis. Identify the type from the PR/MR title, description, and diff patterns, then prioritize accordingly:
+
+| Change type | Primary focus | Secondary focus | Can skip |
+|-------------|---------------|-----------------|----------|
+| **New feature** | Architecture, API Design, Testing | Security, Performance | — |
+| **Bug fix** | Correctness (root cause analysis), Regression test | Side effects | Architecture (unless fix reveals design flaw) |
+| **Refactor** | Behavior preservation, No functional changes | Architecture improvement | New features (flag if scope creep) |
+| **Dependency update** | Dependency Review, Breaking changes | Security advisories | Deep code quality |
+| **Migration/schema** | Data Layer, Backward compat, Rollback plan | Performance | Code style |
+| **Config/infra** | Security (secrets, permissions), Correctness | — | Code quality, Testing |
+| **Documentation** | Accuracy, Completeness | — | Everything else |
+
+### 4.0 PR/MR Description Quality
+
+Before analyzing code, evaluate the PR/MR description itself:
+
+- [ ] **Purpose clear:** Does it explain WHAT the change does and WHY it's needed? Not just "fix bug" — which bug, what was the symptom, what caused it?
+- [ ] **Scope defined:** Is it clear what's in scope and what's not? Flag PRs that mix unrelated changes (feature + refactor + bug fix).
+- [ ] **Testing instructions:** Does it describe how to test the change? For UI changes, are there screenshots?
+- [ ] **Breaking changes noted:** If the change breaks backward compatibility, is it explicitly called out?
+- [ ] **Related issues linked:** Are Jira tickets, GitHub issues, or other references included?
+
+If the description is missing or inadequate, flag it as an Important issue. A good PR description is not optional — it's the reviewer's primary context.
 
 ### 4.1 Architecture and Design
 
@@ -166,7 +203,27 @@ This is the core of the review. Reason deeply on the code, not just surface-leve
 - [ ] Versioning strategy if breaking changes are introduced
 - [ ] Response format is consistent and documented
 
-### 4.9 Documentation
+### 4.9 Data Layer (for changes involving database, migrations, schema)
+
+- [ ] **Migration safety:** Can the migration run on a live database without downtime? Flag `NOT NULL` columns without defaults on large tables, `ALTER TABLE` locks, data backfills that scan entire tables.
+- [ ] **Rollback plan:** Is the migration reversible? Flag destructive operations (DROP COLUMN, DROP TABLE) without a rollback migration.
+- [ ] **Schema design:** Proper field types, constraints, indexes. Flag missing foreign keys, missing `on_delete` behavior, unbounded text fields where a max length is appropriate.
+- [ ] **Data integrity:** Are there race conditions between migration and application code? Does the deploy order matter (migrate first vs deploy first)?
+- [ ] **Backward compatibility:** Can the old code still work with the new schema during deployment? Flag column renames or type changes that break running code.
+- [ ] **Query impact:** Do new fields or indexes affect existing query performance? Flag new queries without EXPLAIN analysis on large tables.
+- [ ] **Django-specific:** `makemigrations` generates correct operations? No manual edits that break the migration graph? `RunPython` operations are idempotent?
+
+### 4.10 Dependency Review (for changes adding or updating dependencies)
+
+- [ ] **Necessity:** Is the dependency actually needed? Flag libraries added for trivial functionality that could be a few lines of code.
+- [ ] **Maintenance status:** Is the library actively maintained? Check last release date, open issues count, bus factor. Flag abandoned projects (no release in 12+ months).
+- [ ] **License compatibility:** Is the license compatible with the project's license? Flag copyleft licenses (GPL) in MIT/Apache projects.
+- [ ] **Security:** Any known vulnerabilities? Check CVE databases. Flag dependencies with unpatched security issues.
+- [ ] **Size and transitive deps:** How many transitive dependencies does it pull in? Flag heavy libraries for small functionality.
+- [ ] **Version pinning:** Is the version properly pinned or constrained? Flag unpinned dependencies (`requests` without version) and overly strict pins (`==1.2.3` when `>=1.2,<2` suffices).
+- [ ] **Alternatives:** Are there lighter, better-maintained, or stdlib alternatives?
+
+### 4.11 Documentation
 
 - [ ] Public API changes are documented (docstrings, README, changelog)
 - [ ] Non-obvious logic has comments explaining "why", not "what"
@@ -285,6 +342,22 @@ Check: N+1 queries, algorithmic complexity, connection pooling, caching, memory]
 
 [Error handling assessment or "Error handling is adequate."
 Check: specific exceptions, resource cleanup, fail-fast, graceful degradation, idempotency]
+
+---
+
+## Data Layer
+
+[Only include if the change involves database migrations, schema changes, or significant query changes.
+Check: migration safety, rollback plan, backward compat, query impact.
+Otherwise write "No data layer changes." or omit this section.]
+
+---
+
+## Dependencies
+
+[Only include if new dependencies are added or updated.
+Check: necessity, maintenance, license, security, version pinning.
+Otherwise omit this section.]
 
 ---
 
