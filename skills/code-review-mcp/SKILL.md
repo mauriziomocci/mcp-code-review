@@ -223,7 +223,30 @@ If the description is missing or inadequate, flag it as an Important issue. A go
 - [ ] **Version pinning:** Is the version properly pinned or constrained? Flag unpinned dependencies (`requests` without version) and overly strict pins (`==1.2.3` when `>=1.2,<2` suffices).
 - [ ] **Alternatives:** Are there lighter, better-maintained, or stdlib alternatives?
 
-### 4.11 Documentation
+### 4.11 Observability (for production services and APIs)
+
+- [ ] **Logging:** Key operations logged at appropriate levels? INFO for business events, WARNING for recoverable issues, ERROR for failures. No DEBUG-level noise in production paths.
+- [ ] **Structured logging:** Logs include contextual data (request ID, user ID, operation) as structured fields, not interpolated into message strings?
+- [ ] **No sensitive data in logs:** PII, tokens, passwords, credit card numbers never logged, even at DEBUG level.
+- [ ] **Error logging:** Exceptions logged with stack traces? Error context sufficient to diagnose without reproducing?
+- [ ] **Metrics:** Key business and technical metrics exposed? Request latency, error rates, queue depths, cache hit rates where applicable.
+- [ ] **Health checks:** New services or endpoints have health/readiness probes?
+- [ ] **Alertability:** Can operations detect when this code fails in production? Are there clear signals (error rates, latency spikes) that would trigger alerts?
+- [ ] **Traceability:** In distributed systems, are correlation/request IDs propagated across service boundaries?
+
+### 4.12 Concurrency and Async (for concurrent, async, or task-queue code)
+
+- [ ] **Race conditions:** Shared mutable state accessed from multiple threads/tasks without synchronization? Flag globals, class-level mutables, and unprotected shared resources.
+- [ ] **Deadlocks:** Multiple locks acquired in inconsistent order? Database transactions that wait on each other?
+- [ ] **Task idempotency:** Can async tasks (Celery, background jobs) be safely retried without side effects? Flag tasks that send emails, charge payments, or write data without idempotency keys.
+- [ ] **Retry safety:** Are retries configured with backoff? Flag infinite retries or retries on non-transient errors (validation failures, 4xx responses).
+- [ ] **Shared state:** Tasks or coroutines sharing mutable state (module-level dicts, caches) without locks or atomic operations?
+- [ ] **Async/await correctness:** No synchronous blocking calls (time.sleep, file I/O, DB queries) inside async functions without wrapping in executor? No fire-and-forget coroutines (missing await)?
+- [ ] **Transaction boundaries:** Database transactions scoped correctly? No long-running transactions that hold locks? No transaction wrapping external HTTP calls?
+- [ ] **Celery-specific:** `acks_late` set for tasks that must not be lost? Task serialization format safe (JSON preferred over pickle)? Result backend cleaned up? Task time limits configured?
+- [ ] **Connection safety:** Database/Redis connections not shared across threads or forked processes? Connection pools configured for concurrent workloads?
+
+### 4.13 Documentation
 
 - [ ] Public API changes are documented (docstrings, README, changelog)
 - [ ] Non-obvious logic has comments explaining "why", not "what"
