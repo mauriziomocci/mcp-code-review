@@ -86,18 +86,32 @@ def auto_detect_language(project_path: Path) -> tuple[str, str | None]:
 
 
 def _detect_python_framework(project_path: Path) -> str | None:
-    """Detect Python framework by scanning common patterns."""
-    for py_file in project_path.rglob("*.py"):
-        try:
-            content = py_file.read_text(errors="ignore")
-        except (OSError, PermissionError):
-            continue
+    """Detect Python framework by scanning common patterns.
 
-        if "INSTALLED_APPS" in content:
-            return "django"
-        if "FastAPI(" in content:
-            return "fastapi"
-        if "Flask(" in content:
-            return "flask"
+    Limits search to top-level files and one level of subdirectories
+    (including src/) to avoid slow rglob on large repositories.
+    """
+    search_dirs = [project_path]
+    src_dir = project_path / "src"
+    if src_dir.is_dir():
+        search_dirs.extend(p for p in src_dir.iterdir() if p.is_dir())
+    search_dirs.extend(
+        p for p in project_path.iterdir()
+        if p.is_dir() and p.name not in {".venv", "venv", "node_modules", ".git", "__pycache__"}
+    )
+
+    for search_dir in search_dirs:
+        for py_file in search_dir.glob("*.py"):
+            try:
+                content = py_file.read_text(errors="ignore")
+            except (OSError, PermissionError):
+                continue
+
+            if "INSTALLED_APPS" in content:
+                return "django"
+            if "FastAPI(" in content:
+                return "fastapi"
+            if "Flask(" in content:
+                return "flask"
 
     return None

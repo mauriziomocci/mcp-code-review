@@ -6,7 +6,9 @@ from __future__ import annotations
 import os
 from datetime import date
 from pathlib import Path
+from urllib.parse import quote_plus
 
+import httpx
 from fastmcp import FastMCP
 
 from mcp_code_review.analyzers import get_available_analyzers
@@ -15,8 +17,8 @@ from mcp_code_review.analyzers.ruff import RuffAnalyzer
 from mcp_code_review.conventions import load_conventions
 from mcp_code_review.models import FileChange, Finding, ProjectConventions, ReviewData
 from mcp_code_review.providers.git_local import GitLocalProvider
-from mcp_code_review.providers.github import GitHubProvider
-from mcp_code_review.providers.gitlab import GitLabProvider
+from mcp_code_review.providers.github import GitHubProvider, parse_github_url
+from mcp_code_review.providers.gitlab import GitLabProvider, parse_gitlab_url
 from mcp_code_review.report import build_report_template, slugify_title
 
 mcp = FastMCP("MCP Code Review")
@@ -107,18 +109,19 @@ async def review_file(path: str, focus: str = "all", locale: str | None = None) 
 
 
 @mcp.tool()
-async def review_project(path: str = ".", locale: str | None = None) -> dict:
+async def review_project(path: str = ".", focus: str = "all", locale: str | None = None) -> dict:
     """Scan entire project: structure, dependencies, security.
 
     Args:
         path: Project root directory (default: current directory)
+        focus: Review focus — "all", "security", "performance", "quality"
         locale: Report language.
     """
     project_path = Path(path)
     conventions = _resolve_conventions(project_path=project_path, locale=locale)
 
     py_files = [str(f) for f in project_path.rglob("*.py") if ".venv" not in str(f)]
-    findings = await _run_analyzers(py_files, focus="all") if py_files else []
+    findings = await _run_analyzers(py_files, focus=focus) if py_files else []
 
     return {
         "source": "project",
@@ -139,9 +142,6 @@ async def post_github_review(pr_url: str, comments: list[dict], verdict: str = "
         comments: List of comments. Each: {"path": str, "line": int, "body": str}
         verdict: "approved", "changes_requested", or "rejected".
     """
-    from mcp_code_review.providers.github import parse_github_url
-    import httpx
-
     owner, repo, pr_num = parse_github_url(pr_url)
     provider = GitHubProvider()
 
@@ -179,10 +179,6 @@ async def post_gitlab_review(mr_url: str, comments: list[dict], verdict: str = "
         comments: List of comments. Each: {"path": str, "line": int, "body": str}
         verdict: "approved", "changes_requested", or "rejected".
     """
-    from mcp_code_review.providers.gitlab import parse_gitlab_url
-    from urllib.parse import quote_plus
-    import httpx
-
     base, project, mr_num = parse_gitlab_url(mr_url)
     encoded_project = quote_plus(project)
     provider = GitLabProvider()

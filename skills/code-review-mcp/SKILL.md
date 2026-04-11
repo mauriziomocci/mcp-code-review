@@ -222,11 +222,12 @@ Structure the review as a markdown report. Use the locale from conventions for s
 
 ### Writing Rules
 
-- Be specific: cite file paths and line numbers for every issue
-- Be constructive: suggest fixes, don't just criticize
+- **Every issue MUST cite `file:line`** — never report a problem without the exact location. Generic observations without file references are not acceptable.
+- Be constructive: suggest fixes with code snippets, don't just criticize
 - Be proportional: a one-line fix gets a one-line comment, a design problem gets a paragraph
 - Acknowledge good work: list strengths first
 - Use the project's locale for section headers (the MCP tools return localized labels)
+- Write the analysis text in the same language as the section headers
 
 ## Phase 6: Save Report
 
